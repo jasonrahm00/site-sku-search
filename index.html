@@ -1,0 +1,134 @@
+<head>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.0.0-alpha1/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-csv/0.71/jquery.csv-0.71.min.js"></script>
+  <style>
+    body {
+    margin: 0 auto;
+    max-width: 1000px;
+    padding: 10px;
+    }
+    form {
+    display: flex
+    margin-top: 40px;
+    }
+    fieldset:first-child {
+    margin-bottom: 20px;
+    }
+    .red {
+    color: red;
+    }
+    .bold {
+    font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <h1>Search SKUs on Coleman Sites</h1>
+  <ul>
+    <li>Refreshing the page will wipe out everything, and you'll have to upload the file and start over from the beginning.</li>
+    <li>Upload a single CSV file containing the list of SKUs you want to search instead of having to copy and paste the SKUs into the search field.</li>
+    <li>One button click searches one SKU and opens it in a new tab. The next button click searches the next SKU, on down the list.</li>
+    <li>CTRL + Click to search several at once (still one search per click), but the more tabs you try to open, the slower your browser will respond.</li>
+  </ul>
+  <div id="dvImportSegments">
+    <form>
+        <fieldset>
+          <p>This needs to be a single column CSV (comma delimited) spreadsheet containing the SKUs you want to search.</p>
+          <legend>Upload your CSV File</legend>
+          <input type="file" name="File Upload" id="txtFileUpload" accept=".csv" />
+        </fieldset>
+        <fieldset>
+          <legend>Search Site</legend>
+          <p class="red">* Changing the site to search will reset the counter and start over at the beginning of the list.</p>
+          <select>
+            <option value="http://www.coleman.com/search/?q=" selected>Live</option>
+          </select>
+          <input id="searchSite" type="button" value="Search Site">
+        </fieldset>
+      </form>
+    <p>Remaining SKUs = <span id="remaining" class="bold"></span></p>
+    <p id="message" class="red"></p>
+  </div>
+  <script>
+    //Global Variable Declarations
+
+    var skus = [];
+    var remainingSkus;
+    var skuIndex = 0;
+    var currentSite = 'http://www.coleman.com/search/?q=';
+
+    //jQuery Function to process a .csv file on the frontend
+    //Developed by: https://cmatskas.com/importing-csv-files-using-jquery-and-html5/
+
+    $(document).ready(function() {
+
+      // The event listener for the file upload
+      document.getElementById('txtFileUpload').addEventListener('change', upload, false);
+
+      // Method that checks that the browser supports the HTML5 File API
+      function browserSupportFileUpload() {
+        var isCompatible = false;
+        if (window.File && window.FileReader && window.FileList && window.Blob) {
+          isCompatible = true;
+        }
+        return isCompatible;
+      }
+
+      // Method that reads and processes the selected file
+      function upload(evt) {
+        if (!browserSupportFileUpload()) {
+          alert('The File APIs are not fully supported in this browser!');
+        } else {
+          skus = [];
+          var data = null;
+          var file = evt.target.files[0];
+          var reader = new FileReader();
+          reader.readAsText(file);
+          reader.onload = function(event) {
+            var csvData = event.target.result;
+            data = $.csv.toArrays(csvData);
+            if (data && data.length > 0) {
+              alert('Imported -' + data.length + '- rows successfully!');
+              document.getElementById("message").innerHTML = '';
+            } else {
+              alert('No data to import!');
+            }
+            //Push data to the skus array
+            for(i = 0; i < data.length; i++) {
+              skus.push(data[i][0]);
+            }
+            remainingSkus = skus.length;
+            document.getElementById("remaining").innerHTML = remainingSkus;
+          };
+          reader.onerror = function() {
+            alert('Unable to read ' + file.fileName);
+          };
+        }
+      }
+    });
+
+    $("select").change(function () {
+      currentSite = $('option:selected').val();
+      skuIndex = 0;
+      remainingSkus = skus.length;
+      document.getElementById("remaining").innerHTML = remainingSkus;
+    });
+
+    //Search Site URL function. Utilizes restful API that calls the unique SKU in the system
+    //Turn into jQuery click event on the button, so I don't have to pass dependencies in the html
+    $("#searchSite").click(function(){
+      if(skuIndex < skus.length) {
+        //Add while loop and counter variable so you can search up to 5 or 10 at once. 
+        //Counter is bound to a dependency on the function. And that dependency value is controlled by a radio button. Counter should be a Global variable?
+        //http://stackoverflow.com/questions/9377046/jquery-trigger-ctrl-click
+        window.open( currentSite + skus[skuIndex] + '&lang=default' );
+        skuIndex++;
+        remainingSkus--;
+        document.getElementById("remaining").innerHTML = remainingSkus;
+      } else {
+        document.getElementById("message").innerHTML = "Out of SKUs to search";
+      }
+    });
+  
+  </script>
+</body>
