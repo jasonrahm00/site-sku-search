@@ -80,6 +80,7 @@
           alert('The File APIs are not fully supported in this browser!');
         } else {
           skus = [];
+          skuIndex = 0;
           var data = null;
           var file = evt.target.files[0];
           var reader = new FileReader();
@@ -114,13 +115,9 @@
       document.getElementById("remaining").innerHTML = remainingSkus;
     });
 
-    //Search Site URL function. Utilizes restful API that calls the unique SKU in the system
-    //Turn into jQuery click event on the button, so I don't have to pass dependencies in the html
+    //Search Site URL function. Simply adds the SKU to the URL search query and returns the page if the SKU exists or the "SKU not found" page if not.
     $("#searchSite").click(function(){
       if(skuIndex < skus.length) {
-        //Add while loop and counter variable so you can search up to 5 or 10 at once. 
-        //Counter is bound to a dependency on the function. And that dependency value is controlled by a radio button. Counter should be a Global variable?
-        //http://stackoverflow.com/questions/9377046/jquery-trigger-ctrl-click
         window.open( currentSite + skus[skuIndex] + '&lang=default' );
         skuIndex++;
         remainingSkus--;
